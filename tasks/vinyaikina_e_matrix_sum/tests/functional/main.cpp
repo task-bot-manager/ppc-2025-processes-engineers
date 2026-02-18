@@ -158,7 +158,7 @@ TEST(VinyaikinaEMatrixSumEdge, LargeMatrixSEQ) {
   for (int i = 0; i < rows; i++) {
     int row_sum = 0;
     for (int j = 0; j < cols; j++) {
-      int val = ((i * cols) + j) % 100 + 1;
+      int val = (((i * cols) + j) % 100) + 1;
       input[2 + (i * cols) + j] = val;
       row_sum += val;
     }
@@ -177,7 +177,7 @@ TEST(VinyaikinaEMatrixSumEdge, LargeMatrixMPI) {
   for (int i = 0; i < rows; i++) {
     int row_sum = 0;
     for (int j = 0; j < cols; j++) {
-      int val = ((i * cols) + j) % 100 + 1;
+      int val = (((i * cols) + j) % 100) + 1;
       input[2 + (i * cols) + j] = val;
       row_sum += val;
     }
