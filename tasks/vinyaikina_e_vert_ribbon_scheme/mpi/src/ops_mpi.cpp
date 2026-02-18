@@ -2,9 +2,48 @@
 
 #include <mpi.h>
 
+#include <cstddef>
 #include <vector>
 
+#include "vinyaikina_e_vert_ribbon_scheme/common/include/common.hpp"
+
 namespace vinyaikina_e_vert_ribbon_scheme {
+
+namespace {
+
+void ComputeColumnDistribution(int cols, int num_proc, std::vector<int> &counts, std::vector<int> &starts) {
+  int base = cols / num_proc;
+  int rem = cols % num_proc;
+  for (int i = 0; i < num_proc; i++) {
+    counts[i] = base + (i < rem ? 1 : 0);
+  }
+  starts[0] = 0;
+  for (int i = 1; i < num_proc; i++) {
+    starts[i] = starts[i - 1] + counts[i - 1];
+  }
+}
+
+std::vector<int> PackSendBuffer(int rows, int cols, int num_proc, const std::vector<int> &matrix,
+                                const std::vector<int> &col_counts, const std::vector<int> &col_starts,
+                                std::vector<int> &send_counts, std::vector<int> &send_offsets) {
+  int total_send = 0;
+  for (int pr = 0; pr < num_proc; pr++) {
+    send_counts[pr] = rows * col_counts[pr];
+    send_offsets[pr] = total_send;
+    total_send += send_counts[pr];
+  }
+  std::vector<int> buf(total_send);
+  for (int pr = 0; pr < num_proc; pr++) {
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < col_counts[pr]; j++) {
+        buf[send_offsets[pr] + (i * col_counts[pr]) + j] = matrix[(i * cols) + col_starts[pr] + j];
+      }
+    }
+  }
+  return buf;
+}
+
+}  // namespace
 
 VinyaikinaEVertRibbonSchemeMPI::VinyaikinaEVertRibbonSchemeMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -25,7 +64,7 @@ bool VinyaikinaEVertRibbonSchemeMPI::PreProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
-    matrix_.assign(static_cast<size_t>(rows_) * cols_, 1);
+    matrix_.assign(static_cast<std::size_t>(rows_) * cols_, 1);
   }
   row_sums_.assign(rows_, 0);
   return true;
@@ -37,18 +76,9 @@ bool VinyaikinaEVertRibbonSchemeMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int base_cols = cols_ / size;
-  int extra = cols_ % size;
-
   std::vector<int> col_counts(size);
   std::vector<int> col_starts(size);
-  for (int i = 0; i < size; i++) {
-    col_counts[i] = base_cols + (i < extra ? 1 : 0);
-  }
-  col_starts[0] = 0;
-  for (int i = 1; i < size; i++) {
-    col_starts[i] = col_starts[i - 1] + col_counts[i - 1];
-  }
+  ComputeColumnDistribution(cols_, size, col_counts, col_starts);
 
   int my_cols = col_counts[rank];
 
@@ -57,20 +87,7 @@ bool VinyaikinaEVertRibbonSchemeMPI::RunImpl() {
   std::vector<int> send_offsets(size, 0);
 
   if (rank == 0) {
-    int total_send = 0;
-    for (int p = 0; p < size; p++) {
-      send_counts[p] = rows_ * col_counts[p];
-      send_offsets[p] = total_send;
-      total_send += send_counts[p];
-    }
-    send_buf.resize(total_send);
-    for (int p = 0; p < size; p++) {
-      for (int i = 0; i < rows_; i++) {
-        for (int j = 0; j < col_counts[p]; j++) {
-          send_buf[send_offsets[p] + (i * col_counts[p]) + j] = matrix_[(i * cols_) + col_starts[p] + j];
-        }
-      }
-    }
+    send_buf = PackSendBuffer(rows_, cols_, size, matrix_, col_counts, col_starts, send_counts, send_offsets);
   }
 
   int recv_count = rows_ * my_cols;
@@ -93,8 +110,8 @@ bool VinyaikinaEVertRibbonSchemeMPI::RunImpl() {
     for (int i = 0; i < rows_; i++) {
       total += row_sums_[i];
     }
-    for (int p = 1; p < size; p++) {
-      MPI_Send(&total, 1, MPI_INT, p, 0, MPI_COMM_WORLD);
+    for (int dest = 1; dest < size; dest++) {
+      MPI_Send(&total, 1, MPI_INT, dest, 0, MPI_COMM_WORLD);
     }
   } else {
     MPI_Recv(&total, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);

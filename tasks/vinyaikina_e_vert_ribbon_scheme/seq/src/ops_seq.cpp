@@ -1,6 +1,9 @@
 #include "vinyaikina_e_vert_ribbon_scheme/seq/include/ops_seq.hpp"
 
+#include <cstddef>
 #include <vector>
+
+#include "vinyaikina_e_vert_ribbon_scheme/common/include/common.hpp"
 
 namespace vinyaikina_e_vert_ribbon_scheme {
 
@@ -20,7 +23,7 @@ bool VinyaikinaEVertRibbonSchemeSEQ::PreProcessingImpl() {
   if (rows_ <= 0 || cols_ <= 0) {
     return false;
   }
-  matrix_.assign(static_cast<size_t>(rows_) * cols_, 1);
+  matrix_.assign(static_cast<std::size_t>(rows_) * cols_, 1);
   row_sums_.assign(rows_, 0);
   return true;
 }
