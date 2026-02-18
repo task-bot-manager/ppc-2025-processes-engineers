@@ -1,22 +1,28 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <vector>
+
+#include "util/include/perf_test_util.hpp"
 #include "vinyaikina_e_quicksort_simple/common/include/common.hpp"
 #include "vinyaikina_e_quicksort_simple/mpi/include/ops_mpi.hpp"
 #include "vinyaikina_e_quicksort_simple/seq/include/ops_seq.hpp"
-#include "util/include/perf_test_util.hpp"
 
 namespace vinyaikina_e_quicksort_simple {
 
 class VinyaikinaEQuicksortSimplePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
-  InType input_data_{};
+  const int kCount_ = 3000000;
+  InType input_data_;
 
   void SetUp() override {
-    input_data_ = kCount_;
+    input_data_.resize(kCount_);
+    for (int i = 0; i < kCount_; i++) {
+      input_data_[i] = kCount_ - i;
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return std::is_sorted(output_data.begin(), output_data.end()) && static_cast<int>(output_data.size()) == kCount_;
   }
 
   InType GetTestInputData() final {
@@ -29,7 +35,8 @@ TEST_P(VinyaikinaEQuicksortSimplePerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, VinyaikinaEQuicksortSimpleMPI, VinyaikinaEQuicksortSimpleSEQ>(PPC_SETTINGS_vinyaikina_e_quicksort_simple);
+    ppc::util::MakeAllPerfTasks<InType, VinyaikinaEQuicksortSimpleMPI, VinyaikinaEQuicksortSimpleSEQ>(
+        PPC_SETTINGS_vinyaikina_e_quicksort_simple);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

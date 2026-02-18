@@ -1,60 +1,67 @@
 #include "vinyaikina_e_quicksort_simple/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <utility>
 #include <vector>
 
-#include "vinyaikina_e_quicksort_simple/common/include/common.hpp"
-#include "util/include/util.hpp"
-
 namespace vinyaikina_e_quicksort_simple {
+
+namespace {
+
+void QuickSort(std::vector<int> &arr, int left, int right) {
+  if (left >= right) {
+    return;
+  }
+  int pivot = arr[left + (right - left) / 2];
+  int i = left;
+  int j = right;
+  while (i <= j) {
+    while (arr[i] < pivot) {
+      i++;
+    }
+    while (arr[j] > pivot) {
+      j--;
+    }
+    if (i <= j) {
+      std::swap(arr[i], arr[j]);
+      i++;
+      j--;
+    }
+  }
+  if (left < j) {
+    QuickSort(arr, left, j);
+  }
+  if (i < right) {
+    QuickSort(arr, i, right);
+  }
+}
+
+}  // namespace
 
 VinyaikinaEQuicksortSimpleSEQ::VinyaikinaEQuicksortSimpleSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
 }
 
 bool VinyaikinaEQuicksortSimpleSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return true;
 }
 
 bool VinyaikinaEQuicksortSimpleSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  data_ = GetInput();
+  return true;
 }
 
 bool VinyaikinaEQuicksortSimpleSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
+  if (data_.size() > 1) {
+    QuickSort(data_, 0, static_cast<int>(data_.size()) - 1);
   }
-
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return true;
 }
 
 bool VinyaikinaEQuicksortSimpleSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  GetOutput() = data_;
+  return true;
 }
 
 }  // namespace vinyaikina_e_quicksort_simple

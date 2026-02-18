@@ -1,7 +1,9 @@
 #pragma once
 
-#include "vinyaikina_e_quicksort_simple/common/include/common.hpp"
+#include <vector>
+
 #include "task/include/task.hpp"
+#include "vinyaikina_e_quicksort_simple/common/include/common.hpp"
 
 namespace vinyaikina_e_quicksort_simple {
 
@@ -17,6 +19,8 @@ class VinyaikinaEQuicksortSimpleMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  std::vector<int> data_;
 };
 
 }  // namespace vinyaikina_e_quicksort_simple
