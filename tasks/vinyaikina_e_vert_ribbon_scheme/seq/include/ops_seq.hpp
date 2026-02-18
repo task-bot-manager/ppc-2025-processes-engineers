@@ -1,7 +1,9 @@
 #pragma once
 
-#include "vinyaikina_e_vert_ribbon_scheme/common/include/common.hpp"
+#include <vector>
+
 #include "task/include/task.hpp"
+#include "vinyaikina_e_vert_ribbon_scheme/common/include/common.hpp"
 
 namespace vinyaikina_e_vert_ribbon_scheme {
 
@@ -17,6 +19,11 @@ class VinyaikinaEVertRibbonSchemeSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  int rows_ = 0;
+  int cols_ = 0;
+  std::vector<int> matrix_;
+  std::vector<int> row_sums_;
 };
 
 }  // namespace vinyaikina_e_vert_ribbon_scheme

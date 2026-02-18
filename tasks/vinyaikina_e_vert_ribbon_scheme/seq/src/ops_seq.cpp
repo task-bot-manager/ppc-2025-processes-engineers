@@ -1,10 +1,6 @@
 #include "vinyaikina_e_vert_ribbon_scheme/seq/include/ops_seq.hpp"
 
-#include <numeric>
 #include <vector>
-
-#include "vinyaikina_e_vert_ribbon_scheme/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace vinyaikina_e_vert_ribbon_scheme {
 
@@ -15,46 +11,41 @@ VinyaikinaEVertRibbonSchemeSEQ::VinyaikinaEVertRibbonSchemeSEQ(const InType &in)
 }
 
 bool VinyaikinaEVertRibbonSchemeSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return GetInput() > 0 && GetOutput() == 0;
 }
 
 bool VinyaikinaEVertRibbonSchemeSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  rows_ = GetInput();
+  cols_ = GetInput();
+  if (rows_ <= 0 || cols_ <= 0) {
+    return false;
+  }
+  matrix_.assign(static_cast<size_t>(rows_) * cols_, 1);
+  row_sums_.assign(rows_, 0);
+  return true;
 }
 
 bool VinyaikinaEVertRibbonSchemeSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
-
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  GetOutput() = 0;
+  for (int i = 0; i < rows_; i++) {
+    int sum = 0;
+    for (int j = 0; j < cols_; j++) {
+      sum += matrix_[(i * cols_) + j];
     }
+    row_sums_[i] = sum;
   }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
+  for (int i = 0; i < rows_; i++) {
+    GetOutput() += row_sums_[i];
   }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return true;
 }
 
 bool VinyaikinaEVertRibbonSchemeSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  if (GetInput() == 0) {
+    return false;
+  }
+  GetOutput() /= GetInput();
+  return true;
 }
 
 }  // namespace vinyaikina_e_vert_ribbon_scheme

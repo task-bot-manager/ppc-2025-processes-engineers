@@ -1,14 +1,14 @@
 #include <gtest/gtest.h>
 
+#include "util/include/perf_test_util.hpp"
 #include "vinyaikina_e_vert_ribbon_scheme/common/include/common.hpp"
 #include "vinyaikina_e_vert_ribbon_scheme/mpi/include/ops_mpi.hpp"
 #include "vinyaikina_e_vert_ribbon_scheme/seq/include/ops_seq.hpp"
-#include "util/include/perf_test_util.hpp"
 
 namespace vinyaikina_e_vert_ribbon_scheme {
 
 class VinyaikinaEVertRibbonSchemePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
+  const int kCount_ = 4000;
   InType input_data_{};
 
   void SetUp() override {
@@ -29,7 +29,8 @@ TEST_P(VinyaikinaEVertRibbonSchemePerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, VinyaikinaEVertRibbonSchemeMPI, VinyaikinaEVertRibbonSchemeSEQ>(PPC_SETTINGS_vinyaikina_e_vert_ribbon_scheme);
+    ppc::util::MakeAllPerfTasks<InType, VinyaikinaEVertRibbonSchemeMPI, VinyaikinaEVertRibbonSchemeSEQ>(
+        PPC_SETTINGS_vinyaikina_e_vert_ribbon_scheme);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

@@ -1,22 +1,15 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 #include "vinyaikina_e_vert_ribbon_scheme/common/include/common.hpp"
 #include "vinyaikina_e_vert_ribbon_scheme/mpi/include/ops_mpi.hpp"
 #include "vinyaikina_e_vert_ribbon_scheme/seq/include/ops_seq.hpp"
-#include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace vinyaikina_e_vert_ribbon_scheme {
 
@@ -28,27 +21,8 @@ class VinyaikinaEVertRibbonSchemeFuncTests : public ppc::util::BaseRunFuncTests<
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_vinyaikina_e_vert_ribbon_scheme, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    input_data_ = std::get<0>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -71,15 +45,53 @@ TEST_P(VinyaikinaEVertRibbonSchemeFuncTests, MatmulFromPic) {
 
 const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<VinyaikinaEVertRibbonSchemeMPI, InType>(kTestParam, PPC_SETTINGS_vinyaikina_e_vert_ribbon_scheme),
-                   ppc::util::AddFuncTask<VinyaikinaEVertRibbonSchemeSEQ, InType>(kTestParam, PPC_SETTINGS_vinyaikina_e_vert_ribbon_scheme));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<VinyaikinaEVertRibbonSchemeMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_vinyaikina_e_vert_ribbon_scheme),
+                                           ppc::util::AddFuncTask<VinyaikinaEVertRibbonSchemeSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_vinyaikina_e_vert_ribbon_scheme));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = VinyaikinaEVertRibbonSchemeFuncTests::PrintFuncTestName<VinyaikinaEVertRibbonSchemeFuncTests>;
+const auto kPerfTestName =
+    VinyaikinaEVertRibbonSchemeFuncTests::PrintFuncTestName<VinyaikinaEVertRibbonSchemeFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, VinyaikinaEVertRibbonSchemeFuncTests, kGtestValues, kPerfTestName);
+
+}  // namespace
+
+namespace {
+
+const std::array<TestType, 5> kEdgeParams = {std::make_tuple(1, "one"), std::make_tuple(2, "two"),
+                                             std::make_tuple(10, "ten"), std::make_tuple(50, "fifty"),
+                                             std::make_tuple(100, "hundred")};
+
+const auto kEdgeTasksList = std::tuple_cat(ppc::util::AddFuncTask<VinyaikinaEVertRibbonSchemeMPI, InType>(
+                                               kEdgeParams, PPC_SETTINGS_vinyaikina_e_vert_ribbon_scheme),
+                                           ppc::util::AddFuncTask<VinyaikinaEVertRibbonSchemeSEQ, InType>(
+                                               kEdgeParams, PPC_SETTINGS_vinyaikina_e_vert_ribbon_scheme));
+
+const auto kEdgeValues = ppc::util::ExpandToValues(kEdgeTasksList);
+
+const auto kEdgeTestName =
+    VinyaikinaEVertRibbonSchemeFuncTests::PrintFuncTestName<VinyaikinaEVertRibbonSchemeFuncTests>;
+
+INSTANTIATE_TEST_SUITE_P(EdgeCaseTests, VinyaikinaEVertRibbonSchemeFuncTests, kEdgeValues, kEdgeTestName);
+
+TEST(VinyaikinaEVertRibbonSchemeSeqValidation, RejectsZeroInput) {
+  VinyaikinaEVertRibbonSchemeSEQ task(0);
+  EXPECT_FALSE(task.Validation());
+  task.PreProcessing();
+  task.Run();
+  task.PostProcessing();
+}
+
+TEST(VinyaikinaEVertRibbonSchemeSeqValidation, RejectsNegativeInput) {
+  VinyaikinaEVertRibbonSchemeSEQ task(-3);
+  EXPECT_FALSE(task.Validation());
+  task.PreProcessing();
+  task.Run();
+  task.PostProcessing();
+}
 
 }  // namespace
 
