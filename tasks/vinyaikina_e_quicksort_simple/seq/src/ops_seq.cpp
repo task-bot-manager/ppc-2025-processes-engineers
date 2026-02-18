@@ -4,35 +4,43 @@
 #include <utility>
 #include <vector>
 
+#include "vinyaikina_e_quicksort_simple/common/include/common.hpp"
+
 namespace vinyaikina_e_quicksort_simple {
 
 namespace {
 
 void QuickSort(std::vector<int> &arr, int left, int right) {
-  if (left >= right) {
-    return;
-  }
-  int pivot = arr[left + (right - left) / 2];
-  int i = left;
-  int j = right;
-  while (i <= j) {
-    while (arr[i] < pivot) {
-      i++;
+  std::vector<std::pair<int, int>> stack;
+  stack.emplace_back(left, right);
+  while (!stack.empty()) {
+    auto [lo, hi] = stack.back();
+    stack.pop_back();
+    if (lo >= hi) {
+      continue;
     }
-    while (arr[j] > pivot) {
-      j--;
+    int pivot = arr[lo + ((hi - lo) / 2)];
+    int i = lo;
+    int j = hi;
+    while (i <= j) {
+      while (arr[i] < pivot) {
+        i++;
+      }
+      while (arr[j] > pivot) {
+        j--;
+      }
+      if (i <= j) {
+        std::swap(arr[i], arr[j]);
+        i++;
+        j--;
+      }
     }
-    if (i <= j) {
-      std::swap(arr[i], arr[j]);
-      i++;
-      j--;
+    if (lo < j) {
+      stack.emplace_back(lo, j);
     }
-  }
-  if (left < j) {
-    QuickSort(arr, left, j);
-  }
-  if (i < right) {
-    QuickSort(arr, i, right);
+    if (i < hi) {
+      stack.emplace_back(i, hi);
+    }
   }
 }
 

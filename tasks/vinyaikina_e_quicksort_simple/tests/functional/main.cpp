@@ -31,7 +31,7 @@ class VinyaikinaEQuicksortSimpleFuncTests : public ppc::util::BaseRunFuncTests<I
       input_data_[i] = size - i;
     }
     expected_output_ = input_data_;
-    std::sort(expected_output_.begin(), expected_output_.end());
+    std::ranges::sort(expected_output_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

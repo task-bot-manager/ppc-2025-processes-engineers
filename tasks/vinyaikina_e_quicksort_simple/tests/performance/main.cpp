@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <vector>
+#include <utility>
 
 #include "util/include/perf_test_util.hpp"
 #include "vinyaikina_e_quicksort_simple/common/include/common.hpp"
@@ -22,7 +22,7 @@ class VinyaikinaEQuicksortSimplePerfTests : public ppc::util::BaseRunPerfTests<I
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::is_sorted(output_data.begin(), output_data.end()) && static_cast<int>(output_data.size()) == kCount_;
+    return std::ranges::is_sorted(output_data) && std::cmp_equal(output_data.size(), kCount_);
   }
 
   InType GetTestInputData() final {

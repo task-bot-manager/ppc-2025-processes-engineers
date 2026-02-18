@@ -6,44 +6,54 @@
 #include <utility>
 #include <vector>
 
+#include "vinyaikina_e_quicksort_simple/common/include/common.hpp"
+
 namespace vinyaikina_e_quicksort_simple {
 
 namespace {
 
 void QuickSort(std::vector<int> &arr, int left, int right) {
-  if (left >= right) {
-    return;
-  }
-  int pivot = arr[left + (right - left) / 2];
-  int i = left;
-  int j = right;
-  while (i <= j) {
-    while (arr[i] < pivot) {
-      i++;
+  std::vector<std::pair<int, int>> stack;
+  stack.emplace_back(left, right);
+  while (!stack.empty()) {
+    auto [lo, hi] = stack.back();
+    stack.pop_back();
+    if (lo >= hi) {
+      continue;
     }
-    while (arr[j] > pivot) {
-      j--;
+    int pivot = arr[lo + ((hi - lo) / 2)];
+    int i = lo;
+    int j = hi;
+    while (i <= j) {
+      while (arr[i] < pivot) {
+        i++;
+      }
+      while (arr[j] > pivot) {
+        j--;
+      }
+      if (i <= j) {
+        std::swap(arr[i], arr[j]);
+        i++;
+        j--;
+      }
     }
-    if (i <= j) {
-      std::swap(arr[i], arr[j]);
-      i++;
-      j--;
+    if (lo < j) {
+      stack.emplace_back(lo, j);
     }
-  }
-  if (left < j) {
-    QuickSort(arr, left, j);
-  }
-  if (i < right) {
-    QuickSort(arr, i, right);
+    if (i < hi) {
+      stack.emplace_back(i, hi);
+    }
   }
 }
 
 std::vector<int> MergeSorted(const std::vector<int> &a, const std::vector<int> &b) {
   std::vector<int> result;
   result.reserve(a.size() + b.size());
-  std::size_t i = 0;
-  std::size_t j = 0;
-  while (i < a.size() && j < b.size()) {
+  int i = 0;
+  int j = 0;
+  int a_size = static_cast<int>(a.size());
+  int b_size = static_cast<int>(b.size());
+  while (i < a_size && j < b_size) {
     if (a[i] <= b[j]) {
       result.push_back(a[i]);
       i++;
@@ -52,11 +62,11 @@ std::vector<int> MergeSorted(const std::vector<int> &a, const std::vector<int> &
       j++;
     }
   }
-  while (i < a.size()) {
+  while (i < a_size) {
     result.push_back(a[i]);
     i++;
   }
-  while (j < b.size()) {
+  while (j < b_size) {
     result.push_back(b[j]);
     j++;
   }
