@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
-#include <vector>
 
 #include "util/include/perf_test_util.hpp"
 #include "vinyaikina_e_matrix_sum/common/include/common.hpp"
@@ -17,7 +16,7 @@ class VinyaikinaEMatrixSumPerfTests : public ppc::util::BaseRunPerfTests<InType,
   OutType expected_output_;
 
   void SetUp() override {
-    input_data_.resize(static_cast<size_t>(kRows) * kCols + 2);
+    input_data_.resize((static_cast<size_t>(kRows) * kCols) + 2);
     input_data_[0] = kRows;
     input_data_[1] = kCols;
     for (size_t i = 2; i < input_data_.size(); i++) {

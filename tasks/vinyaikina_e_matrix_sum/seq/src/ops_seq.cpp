@@ -1,6 +1,9 @@
 #include "vinyaikina_e_matrix_sum/seq/include/ops_seq.hpp"
 
+#include <cstddef>
 #include <vector>
+
+#include "vinyaikina_e_matrix_sum/common/include/common.hpp"
 
 namespace vinyaikina_e_matrix_sum {
 
@@ -19,7 +22,7 @@ bool VinyaikinaEMatrixSumSEQ::ValidationImpl() {
   if (r <= 0 || c <= 0) {
     return false;
   }
-  return input.size() == static_cast<size_t>(r) * static_cast<size_t>(c) + 2;
+  return input.size() == (static_cast<size_t>(r) * static_cast<size_t>(c)) + 2;
 }
 
 bool VinyaikinaEMatrixSumSEQ::PreProcessingImpl() {

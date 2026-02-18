@@ -5,7 +5,6 @@
 #include <memory>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -28,7 +27,7 @@ class VinyaikinaEMatrixSumFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
     int rows = size;
     int cols = size;
-    input_data_.resize(static_cast<size_t>(rows) * static_cast<size_t>(cols) + 2);
+    input_data_.resize((static_cast<size_t>(rows) * static_cast<size_t>(cols)) + 2);
     input_data_[0] = rows;
     input_data_[1] = cols;
 
@@ -36,7 +35,7 @@ class VinyaikinaEMatrixSumFuncTests : public ppc::util::BaseRunFuncTests<InType,
     for (int i = 0; i < rows; i++) {
       int row_sum = 0;
       for (int j = 0; j < cols; j++) {
-        int val = i * cols + j + 1;
+        int val = (i * cols) + j + 1;
         input_data_[2 + (i * cols) + j] = val;
         row_sum += val;
       }
@@ -152,15 +151,15 @@ TEST(VinyaikinaEMatrixSumEdge, NonSquareTallerMPI) {
 TEST(VinyaikinaEMatrixSumEdge, LargeMatrixSEQ) {
   int rows = 50;
   int cols = 60;
-  InType input(static_cast<size_t>(rows) * cols + 2);
+  InType input((static_cast<size_t>(rows) * cols) + 2);
   input[0] = rows;
   input[1] = cols;
   OutType expected(rows);
   for (int i = 0; i < rows; i++) {
     int row_sum = 0;
     for (int j = 0; j < cols; j++) {
-      int val = (i * cols + j) % 100 + 1;
-      input[2 + i * cols + j] = val;
+      int val = ((i * cols) + j) % 100 + 1;
+      input[2 + (i * cols) + j] = val;
       row_sum += val;
     }
     expected[i] = row_sum;
@@ -171,15 +170,15 @@ TEST(VinyaikinaEMatrixSumEdge, LargeMatrixSEQ) {
 TEST(VinyaikinaEMatrixSumEdge, LargeMatrixMPI) {
   int rows = 50;
   int cols = 60;
-  InType input(static_cast<size_t>(rows) * cols + 2);
+  InType input((static_cast<size_t>(rows) * cols) + 2);
   input[0] = rows;
   input[1] = cols;
   OutType expected(rows);
   for (int i = 0; i < rows; i++) {
     int row_sum = 0;
     for (int j = 0; j < cols; j++) {
-      int val = (i * cols + j) % 100 + 1;
-      input[2 + i * cols + j] = val;
+      int val = ((i * cols) + j) % 100 + 1;
+      input[2 + (i * cols) + j] = val;
       row_sum += val;
     }
     expected[i] = row_sum;
@@ -190,7 +189,7 @@ TEST(VinyaikinaEMatrixSumEdge, LargeMatrixMPI) {
 TEST(VinyaikinaEMatrixSumEdge, AllOnesSEQ) {
   int rows = 4;
   int cols = 4;
-  InType input(static_cast<size_t>(rows) * cols + 2, 1);
+  InType input((static_cast<size_t>(rows) * cols) + 2, 1);
   input[0] = rows;
   input[1] = cols;
   OutType expected(rows, cols);
@@ -200,7 +199,7 @@ TEST(VinyaikinaEMatrixSumEdge, AllOnesSEQ) {
 TEST(VinyaikinaEMatrixSumEdge, AllOnesMPI) {
   int rows = 4;
   int cols = 4;
-  InType input(static_cast<size_t>(rows) * cols + 2, 1);
+  InType input((static_cast<size_t>(rows) * cols) + 2, 1);
   input[0] = rows;
   input[1] = cols;
   OutType expected(rows, cols);
@@ -210,14 +209,14 @@ TEST(VinyaikinaEMatrixSumEdge, AllOnesMPI) {
 TEST(VinyaikinaEMatrixSumEdge, ManyRowsFewColsSEQ) {
   int rows = 10;
   int cols = 2;
-  InType input(static_cast<size_t>(rows) * cols + 2);
+  InType input((static_cast<size_t>(rows) * cols) + 2);
   input[0] = rows;
   input[1] = cols;
   OutType expected(rows);
   for (int i = 0; i < rows; i++) {
-    input[2 + i * cols] = i + 1;
-    input[2 + i * cols + 1] = (i + 1) * 10;
-    expected[i] = (i + 1) + (i + 1) * 10;
+    input[2 + (i * cols)] = i + 1;
+    input[2 + (i * cols) + 1] = (i + 1) * 10;
+    expected[i] = (i + 1) + ((i + 1) * 10);
   }
   ValidateMatrixSum<VinyaikinaEMatrixSumSEQ>(input, expected);
 }
@@ -225,14 +224,14 @@ TEST(VinyaikinaEMatrixSumEdge, ManyRowsFewColsSEQ) {
 TEST(VinyaikinaEMatrixSumEdge, ManyRowsFewColsMPI) {
   int rows = 10;
   int cols = 2;
-  InType input(static_cast<size_t>(rows) * cols + 2);
+  InType input((static_cast<size_t>(rows) * cols) + 2);
   input[0] = rows;
   input[1] = cols;
   OutType expected(rows);
   for (int i = 0; i < rows; i++) {
-    input[2 + i * cols] = i + 1;
-    input[2 + i * cols + 1] = (i + 1) * 10;
-    expected[i] = (i + 1) + (i + 1) * 10;
+    input[2 + (i * cols)] = i + 1;
+    input[2 + (i * cols) + 1] = (i + 1) * 10;
+    expected[i] = (i + 1) + ((i + 1) * 10);
   }
   ValidateMatrixSum<VinyaikinaEMatrixSumMPI>(input, expected);
 }
