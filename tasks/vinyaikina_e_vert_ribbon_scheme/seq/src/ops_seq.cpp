@@ -24,21 +24,22 @@ bool VinyaikinaEVertRibbonSchemeSEQ::PreProcessingImpl() {
     return false;
   }
   matrix_.assign(static_cast<std::size_t>(rows_) * cols_, 1);
-  row_sums_.assign(rows_, 0);
+  vector_.assign(cols_, 1);
+  result_.assign(rows_, 0);
   return true;
 }
 
 bool VinyaikinaEVertRibbonSchemeSEQ::RunImpl() {
-  GetOutput() = 0;
   for (int i = 0; i < rows_; i++) {
     int sum = 0;
     for (int j = 0; j < cols_; j++) {
-      sum += matrix_[(i * cols_) + j];
+      sum += matrix_[(i * cols_) + j] * vector_[j];
     }
-    row_sums_[i] = sum;
+    result_[i] = sum;
   }
+  GetOutput() = 0;
   for (int i = 0; i < rows_; i++) {
-    GetOutput() += row_sums_[i];
+    GetOutput() += result_[i];
   }
   return true;
 }

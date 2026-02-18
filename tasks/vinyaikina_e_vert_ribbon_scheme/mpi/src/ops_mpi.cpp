@@ -23,9 +23,9 @@ void ComputeColumnDistribution(int cols, int num_proc, std::vector<int> &counts,
   }
 }
 
-std::vector<int> PackSendBuffer(int rows, int cols, int num_proc, const std::vector<int> &matrix,
-                                const std::vector<int> &col_counts, const std::vector<int> &col_starts,
-                                std::vector<int> &send_counts, std::vector<int> &send_offsets) {
+std::vector<int> PackMatrixBuffer(int rows, int cols, int num_proc, const std::vector<int> &matrix,
+                                  const std::vector<int> &col_counts, const std::vector<int> &col_starts,
+                                  std::vector<int> &send_counts, std::vector<int> &send_offsets) {
   int total_send = 0;
   for (int pr = 0; pr < num_proc; pr++) {
     send_counts[pr] = rows * col_counts[pr];
@@ -65,8 +65,9 @@ bool VinyaikinaEVertRibbonSchemeMPI::PreProcessingImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
     matrix_.assign(static_cast<std::size_t>(rows_) * cols_, 1);
+    vector_.assign(cols_, 1);
   }
-  row_sums_.assign(rows_, 0);
+  result_.assign(rows_, 0);
   return true;
 }
 
@@ -82,33 +83,45 @@ bool VinyaikinaEVertRibbonSchemeMPI::RunImpl() {
 
   int my_cols = col_counts[rank];
 
-  std::vector<int> send_buf;
-  std::vector<int> send_counts(size, 0);
-  std::vector<int> send_offsets(size, 0);
+  std::vector<int> matrix_send_buf;
+  std::vector<int> matrix_send_counts(size, 0);
+  std::vector<int> matrix_send_offsets(size, 0);
 
   if (rank == 0) {
-    send_buf = PackSendBuffer(rows_, cols_, size, matrix_, col_counts, col_starts, send_counts, send_offsets);
+    matrix_send_buf =
+        PackMatrixBuffer(rows_, cols_, size, matrix_, col_counts, col_starts, matrix_send_counts, matrix_send_offsets);
   }
 
-  int recv_count = rows_ * my_cols;
-  std::vector<int> local_data(recv_count);
-  MPI_Scatterv(send_buf.data(), send_counts.data(), send_offsets.data(), MPI_INT, local_data.data(), recv_count,
-               MPI_INT, 0, MPI_COMM_WORLD);
+  int matrix_recv_count = rows_ * my_cols;
+  std::vector<int> local_matrix(matrix_recv_count);
+  MPI_Scatterv(matrix_send_buf.data(), matrix_send_counts.data(), matrix_send_offsets.data(), MPI_INT,
+               local_matrix.data(), matrix_recv_count, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<int> local_sums(rows_, 0);
+  std::vector<int> vector_send_counts(size, 0);
+  std::vector<int> vector_send_offsets(size, 0);
+  for (int pr = 0; pr < size; pr++) {
+    vector_send_counts[pr] = col_counts[pr];
+    vector_send_offsets[pr] = col_starts[pr];
+  }
+
+  std::vector<int> local_vector(my_cols);
+  MPI_Scatterv(vector_.data(), vector_send_counts.data(), vector_send_offsets.data(), MPI_INT, local_vector.data(),
+               my_cols, MPI_INT, 0, MPI_COMM_WORLD);
+
+  std::vector<int> local_result(rows_, 0);
   for (int i = 0; i < rows_; i++) {
     for (int j = 0; j < my_cols; j++) {
-      local_sums[i] += local_data[(i * my_cols) + j];
+      local_result[i] += local_matrix[(i * my_cols) + j] * local_vector[j];
     }
   }
 
-  row_sums_.assign(rows_, 0);
-  MPI_Reduce(local_sums.data(), row_sums_.data(), rows_, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  result_.assign(rows_, 0);
+  MPI_Reduce(local_result.data(), result_.data(), rows_, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
   int total = 0;
   if (rank == 0) {
     for (int i = 0; i < rows_; i++) {
-      total += row_sums_[i];
+      total += result_[i];
     }
     for (int dest = 1; dest < size; dest++) {
       MPI_Send(&total, 1, MPI_INT, dest, 0, MPI_COMM_WORLD);

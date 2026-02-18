@@ -23,7 +23,8 @@ class VinyaikinaEVertRibbonSchemeMPI : public BaseTask {
   int rows_ = 0;
   int cols_ = 0;
   std::vector<int> matrix_;
-  std::vector<int> row_sums_;
+  std::vector<int> vector_;
+  std::vector<int> result_;
 };
 
 }  // namespace vinyaikina_e_vert_ribbon_scheme
